@@ -23,6 +23,7 @@ namespace arduino {
     {0x2341, 0x8036},  // Arduino Leonardo
     {0x2341, 0x8037},  // Arduino Micro
     {0x2341, 0x0036},  // Arduino Leonardo bootloader
+    {0x045E, 0x0750},  // Leonardo with custom VID:PID
   };
 
   // Windows scancode → Arduino Keyboard.h keycode mapping
