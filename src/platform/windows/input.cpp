@@ -481,9 +481,10 @@ namespace platf {
       auto &ard = arduino::instance();
       if (i.type == INPUT_KEYBOARD) {
         // Use scancode if available, otherwise VK code
-        uint16_t code = i.ki.wScan ? i.ki.wScan : i.ki.wVk;
+        bool is_scan = (i.ki.wScan != 0);
+        uint16_t code = is_scan ? i.ki.wScan : i.ki.wVk;
         bool release = (i.ki.dwFlags & KEYEVENTF_KEYUP) != 0;
-        ard.key_press(code, release);
+        ard.key_press(code, release, is_scan);
       } else if (i.type == INPUT_MOUSE) {
         if (i.mi.dwFlags & MOUSEEVENTF_MOVE) {
           if (i.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {

@@ -41,7 +41,7 @@ namespace arduino {
     void mouse_scroll(int delta);
 
     // Keyboard commands
-    void key_press(uint16_t keycode, bool release);
+    void key_press(uint16_t keycode, bool release, bool is_scancode = true);
     void key_string(const std::string &text);
     void release_all();
 
