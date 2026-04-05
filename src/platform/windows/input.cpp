@@ -16,6 +16,7 @@
 #include <ViGEm/Client.h>
 
 // local includes
+#include "arduino_serial.h"
 #include "keylayout.h"
 #include "misc.h"
 #include "src/config.h"
@@ -447,6 +448,15 @@ namespace platf {
     input_t result {new input_raw_t {}};
     auto &raw = *(input_raw_t *) result.get();
 
+    // Try to connect Arduino HID for anti-cheat safe input
+    if (!arduino::is_enabled()) {
+      if (arduino::instance().connect()) {
+        BOOST_LOG(info) << "Arduino HID input enabled — SendInput bypassed";
+      } else {
+        BOOST_LOG(info) << "Arduino not found — using standard SendInput";
+      }
+    }
+
     raw.vigem = new vigem_t {};
     if (raw.vigem->init()) {
       delete raw.vigem;
@@ -462,10 +472,46 @@ namespace platf {
   }
 
   /**
-   * @brief Calls SendInput() and switches input desktops if required.
+   * @brief Calls SendInput() or routes through Arduino HID when available.
    * @param i The `INPUT` struct to send.
    */
   void send_input(INPUT &i) {
+    // Route through Arduino HID if connected (anti-cheat safe)
+    if (arduino::is_enabled()) {
+      auto &ard = arduino::instance();
+      if (i.type == INPUT_KEYBOARD) {
+        // Use scancode if available, otherwise VK code
+        uint16_t code = i.ki.wScan ? i.ki.wScan : i.ki.wVk;
+        bool release = (i.ki.dwFlags & KEYEVENTF_KEYUP) != 0;
+        ard.key_press(code, release);
+      } else if (i.type == INPUT_MOUSE) {
+        if (i.mi.dwFlags & MOUSEEVENTF_MOVE) {
+          if (i.mi.dwFlags & MOUSEEVENTF_ABSOLUTE) {
+            // Absolute move — convert from 0-65535 to screen coordinates
+            int screen_w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+            int screen_h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+            int x = (int)((float)i.mi.dx / 65535.0f * screen_w);
+            int y = (int)((float)i.mi.dy / 65535.0f * screen_h);
+            ard.mouse_move_absolute(x, y, screen_w, screen_h);
+          } else {
+            ard.mouse_move_relative(i.mi.dx, i.mi.dy);
+          }
+        }
+        if (i.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP))
+          ard.mouse_button(1, (i.mi.dwFlags & MOUSEEVENTF_LEFTUP) != 0);
+        if (i.mi.dwFlags & (MOUSEEVENTF_MIDDLEDOWN | MOUSEEVENTF_MIDDLEUP))
+          ard.mouse_button(2, (i.mi.dwFlags & MOUSEEVENTF_MIDDLEUP) != 0);
+        if (i.mi.dwFlags & (MOUSEEVENTF_RIGHTDOWN | MOUSEEVENTF_RIGHTUP))
+          ard.mouse_button(3, (i.mi.dwFlags & MOUSEEVENTF_RIGHTUP) != 0);
+        if (i.mi.dwFlags & MOUSEEVENTF_WHEEL)
+          ard.mouse_scroll(i.mi.mouseData);
+        if (i.mi.dwFlags & MOUSEEVENTF_HWHEEL)
+          ard.mouse_scroll(i.mi.mouseData);  // Arduino MW handles both
+      }
+      return;
+    }
+
+    // Default: Windows SendInput
   retry:
     auto send = SendInput(1, &i, sizeof(INPUT));
     if (send != 1) {
