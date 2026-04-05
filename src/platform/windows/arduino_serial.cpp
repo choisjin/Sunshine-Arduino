@@ -157,7 +157,7 @@ namespace arduino {
       case 74: return 0xDE;  // NumpadSubtract (unique scancode)
       case 78: return 0xDB;  // NumpadAdd (unique scancode)
       case 55: return 0xDD;  // NumpadMultiply
-      case 53: return '/';   // NumpadDivide (with extended flag)
+      // case 53 = NumpadDivide shares scancode with '/' (already mapped above)
 
       default: return scan;  // Pass through unknown
     }
