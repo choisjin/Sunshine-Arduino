@@ -151,21 +151,13 @@ namespace arduino {
       case 87: return 0xCC;  // F11
       case 88: return 0xCD;  // F12
 
-      // Numpad
-      case 69: return 0xDB;  // NumLock → NumpadAdd (placeholder)
-      case 71: return 0xE7;  // Numpad7
-      case 72: return 0xE8;  // Numpad8
-      case 73: return 0xE9;  // Numpad9
-      case 74: return 0xDE;  // NumpadSubtract
-      case 75: return 0xE4;  // Numpad4
-      case 76: return 0xE5;  // Numpad5
-      case 77: return 0xE6;  // Numpad6
-      case 78: return 0xDB;  // NumpadAdd
-      case 79: return 0xE1;  // Numpad1
-      case 80: return 0xE2;  // Numpad2
-      case 81: return 0xE3;  // Numpad3
-      case 82: return 0xEA;  // Numpad0
-      case 83: return 0xEB;  // NumpadDecimal
+      // Numpad scancodes overlap with navigation (71=Home/Num7, 72=Up/Num8, etc.)
+      // Extended key flag distinguishes them, but Arduino Keyboard.h doesn't support numpad.
+      // Navigation keys take priority (already mapped above).
+      case 74: return 0xDE;  // NumpadSubtract (unique scancode)
+      case 78: return 0xDB;  // NumpadAdd (unique scancode)
+      case 55: return 0xDD;  // NumpadMultiply
+      case 53: return '/';   // NumpadDivide (with extended flag)
 
       default: return scan;  // Pass through unknown
     }
