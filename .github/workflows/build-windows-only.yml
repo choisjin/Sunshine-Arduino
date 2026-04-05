@@ -77,7 +77,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Sunshine-Arduino-Windows
-          path: |
-            build/sunshine.exe
-            build/*.dll
-            Sunshine*.zip
+          path: build/cpack_artifacts/Sunshine.zip
